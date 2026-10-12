@@ -54,4 +54,5 @@ protected:
 	TObjectPtr<UNBBNotificationWidget> NotificationWidget;
 
 	FTimerHandle StatusTimerHandle;
+	uint32 LastNotificationRevision = 0;
 };

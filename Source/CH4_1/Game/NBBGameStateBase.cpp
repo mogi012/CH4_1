@@ -1,7 +1,6 @@
 ﻿#include "Game/NBBGameStateBase.h"
-#include "Player/NBBPlayerController.h"
-#include "Engine/World.h"
 #include "Net/UnrealNetwork.h"
+#include "TimerManager.h"
 
 void ANBBGameStateBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
@@ -9,6 +8,7 @@ void ANBBGameStateBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 
 	DOREPLIFETIME(ANBBGameStateBase, TurnPlayerName);
 	DOREPLIFETIME(ANBBGameStateBase, TurnEndServerTime);
+	DOREPLIFETIME(ANBBGameStateBase, Notification);
 }
 
 void ANBBGameStateBase::SetTurnInfo(const FString& InTurnPlayerName, double InTurnEndServerTime)
@@ -35,30 +35,27 @@ float ANBBGameStateBase::GetTurnRemainingTime() const
 	return static_cast<float>(FMath::Max(0.0, TurnEndServerTime - GetServerWorldTimeSeconds()));
 }
 
-ANBBPlayerController* ANBBGameStateBase::GetLocalPC() const
+void ANBBGameStateBase::SetNotification(const FString& Message, float Duration)
 {
-	UWorld* World = GetWorld();
-	if (!World)
+	if (!HasAuthority())
 	{
-		return nullptr;
+		return;
 	}
 
-	// 리슨 서버는 다른 클라 PC도 들고 있어서 로컬 PC만 찾음
-	for (FConstPlayerControllerIterator It = World->GetPlayerControllerIterator(); It; ++It)
+	Notification.Message = Message;
+	Notification.Duration = FMath::Max(0.f, Duration);
+	++Notification.Revision;
+	GetWorldTimerManager().ClearTimer(NotificationTimerHandle);
+	if (Notification.Duration > 0.f)
 	{
-		ANBBPlayerController* PC = Cast<ANBBPlayerController>(It->Get());
-		if (PC && PC->IsLocalController())
-		{
-			return PC;
-		}
+		GetWorldTimerManager().SetTimer(NotificationTimerHandle, this, &ANBBGameStateBase::ExpireNotification, Notification.Duration, false);
 	}
-	return nullptr;
+	ForceNetUpdate();
 }
 
-void ANBBGameStateBase::MulticastShowNotification_Implementation(const FString& Message, float Duration)
+void ANBBGameStateBase::ExpireNotification()
 {
-	if (ANBBPlayerController* PC = GetLocalPC())
-	{
-		PC->ShowNotification(Message, Duration);
-	}
+	Notification.Duration = 0.f;
+	++Notification.Revision;
+	ForceNetUpdate();
 }

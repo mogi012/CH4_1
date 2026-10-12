@@ -109,6 +109,13 @@ void ANBBPlayerController::ShowNotification(const FString& Message, float Durati
 
 void ANBBPlayerController::RefreshStatus()
 {
+	const ANBBGameStateBase* GS = GetWorld() ? GetWorld()->GetGameState<ANBBGameStateBase>() : nullptr;
+	if (NotificationWidget && GS && LastNotificationRevision != GS->GetNotification().Revision)
+	{
+		LastNotificationRevision = GS->GetNotification().Revision;
+		ShowNotification(GS->GetNotification().Message, GS->GetNotification().Duration);
+	}
+
 	if (!ChatWidget)
 	{
 		return;
@@ -120,7 +127,6 @@ void ANBBPlayerController::RefreshStatus()
 		ChatWidget->SetStatusText(FString::Printf(TEXT("나: %s"), *PS->GetPlayerInfoString()));
 	}
 
-	const ANBBGameStateBase* GS = GetWorld() ? GetWorld()->GetGameState<ANBBGameStateBase>() : nullptr;
 	if (!GS)
 	{
 		return;

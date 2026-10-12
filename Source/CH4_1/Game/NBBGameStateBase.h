@@ -4,7 +4,20 @@
 #include "GameFramework/GameStateBase.h"
 #include "NBBGameStateBase.generated.h"
 
-class ANBBPlayerController;
+USTRUCT()
+struct FNBBNotificationState
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	FString Message;
+
+	UPROPERTY()
+	float Duration = 0.f;
+
+	UPROPERTY()
+	uint32 Revision = 0;
+};
 
 UCLASS()
 class CH4_1_API ANBBGameStateBase : public AGameStateBase
@@ -14,8 +27,8 @@ class CH4_1_API ANBBGameStateBase : public AGameStateBase
 public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-	UFUNCTION(NetMulticast, Reliable)
-	void MulticastShowNotification(const FString& Message, float Duration);
+	void SetNotification(const FString& Message, float Duration);
+	const FNBBNotificationState& GetNotification() const { return Notification; }
 
 	// 서버에서만 호출
 	void SetTurnInfo(const FString& InTurnPlayerName, double InTurnEndServerTime);
@@ -25,6 +38,9 @@ public:
 	float GetTurnRemainingTime() const;
 
 protected:
+	UPROPERTY(Replicated)
+	FNBBNotificationState Notification;
+
 	// 현재 턴인 플레이어 이름. 비어 있으면 턴 없음
 	UPROPERTY(Replicated)
 	FString TurnPlayerName;
@@ -34,5 +50,6 @@ protected:
 	double TurnEndServerTime = 0.0;
 
 private:
-	ANBBPlayerController* GetLocalPC() const;
+	void ExpireNotification();
+	FTimerHandle NotificationTimerHandle;
 };

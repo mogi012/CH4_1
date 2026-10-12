@@ -58,6 +58,15 @@ void UNBBNotificationWidget::ShowNotification(const FString& Message, float Dura
 	{
 		return;
 	}
+	if (Duration <= 0.f)
+	{
+		if (UWorld* World = GetWorld())
+		{
+			World->GetTimerManager().ClearTimer(HideTimerHandle);
+		}
+		HideNotification();
+		return;
+	}
 
 	NotificationText->SetText(FText::FromString(Message));
 	NotificationText->SetVisibility(ESlateVisibility::HitTestInvisible);

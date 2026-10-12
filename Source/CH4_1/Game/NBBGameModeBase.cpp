@@ -208,10 +208,12 @@ void ANBBGameModeBase::ProcessChatMessage(ANBBPlayerController* Sender, const FS
 
 	const FString Name = PS->GetPlayerNameString();
 
-	// /로 시작하면 일반 채팅
-	if (Message.StartsWith(TEXT("/")))
+	// 접두사가 없는 일반 문장도 채팅으로 전달합니다.
+	const bool bExplicitChat = Message.StartsWith(TEXT("/"));
+	const bool bNumericInput = Message.Len() > 0 && Message.IsNumeric();
+	if (bExplicitChat || !bNumericInput)
 	{
-		const FString ChatBody = Message.RightChop(1).TrimStartAndEnd();
+		const FString ChatBody = bExplicitChat ? Message.RightChop(1).TrimStartAndEnd() : Message;
 		if (!ChatBody.IsEmpty())
 		{
 			BroadcastChat(FString::Printf(TEXT("%s: %s"), *Name, *ChatBody));
@@ -514,6 +516,6 @@ void ANBBGameModeBase::BroadcastNotification(const FString& Message, float Durat
 {
 	if (ANBBGameStateBase* GS = GetGameState<ANBBGameStateBase>())
 	{
-		GS->MulticastShowNotification(Message, Duration);
+		GS->SetNotification(Message, Duration);
 	}
 }

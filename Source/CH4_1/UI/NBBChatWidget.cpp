@@ -57,7 +57,9 @@ void UNBBChatWidget::BuildLayout()
 	ScrollSlot->SetPadding(FMargin(0.f, 0.f, 0.f, 6.f));
 
 	InputBox = WidgetTree->ConstructWidget<UEditableTextBox>(UEditableTextBox::StaticClass(), TEXT("InputBox"));
-	InputBox->SetHintText(FText::FromString(TEXT("숫자 3개 입력 후 Enter (/로 시작하면 채팅)")));
+	InputBox->SetForegroundColor(FLinearColor::Black);
+	InputBox->WidgetStyle.SetFocusedForegroundColor(FSlateColor(FLinearColor::Black));
+	InputBox->SetHintText(FText::FromString(TEXT("서로 다른 숫자 3개 또는 메시지 입력 후 Enter")));
 	VBox->AddChildToVerticalBox(InputBox);
 }
 
